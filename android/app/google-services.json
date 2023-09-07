@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "449980123915",
+    "project_id": "flutter-bloc-crud",
+    "storage_bucket": "flutter-bloc-crud.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:449980123915:android:c3252669668efc08fdf00e",
+        "android_client_info": {
+          "package_name": "com.ecommerce.hive"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "449980123915-ea58l56d2l2kscbhhk44hnvb1cinnotd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ecommerce.hive",
+            "certificate_hash": "7188ab69a152bf769470c308a19cfb695e369de5"
+          }
+        },
+        {
+          "client_id": "449980123915-63uusb5k34hui4kgu0uspt1di8f0jkp4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3YBI3TAkds-qvsBQ9sNqKm-LxU5UA6GA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "449980123915-63uusb5k34hui4kgu0uspt1di8f0jkp4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "449980123915-2kcbf4tgnbfc1j01ghlcuc9gc2jve4bk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ecommerce.hive"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:449980123915:android:94b40e1f0b9f7e1dfdf00e",
+        "android_client_info": {
+          "package_name": "com.google.firebase.presents.flutterbloccrud"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "449980123915-63uusb5k34hui4kgu0uspt1di8f0jkp4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3YBI3TAkds-qvsBQ9sNqKm-LxU5UA6GA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "449980123915-63uusb5k34hui4kgu0uspt1di8f0jkp4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "449980123915-2kcbf4tgnbfc1j01ghlcuc9gc2jve4bk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ecommerce.hive"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
