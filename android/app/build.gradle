@@ -23,7 +23,7 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-localProperties.load(project.rootProject.file('local.properties').newDataInputStream()) 
+//localProperties.load(project.rootProject.file('local.properties').newDataInputStream()) 
 
 def flutterApiKey = localProperties.getProperty('flutter.apiKey') 
 if (flutterApiKey == null) {
