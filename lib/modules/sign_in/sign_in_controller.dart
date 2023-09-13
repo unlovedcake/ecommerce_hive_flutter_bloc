@@ -1,7 +1,7 @@
 part of 'sign_in.dart';
 
 extension on _SignInState {
-  void _authenticateWithEmailAndPassword() {
+  _authenticateWithEmailAndPassword() {
     if (_formKey.currentState!.validate()) {
       BlocProvider.of<AuthBloc>(context).add(
         SignInRequested(_emailController.text, _passwordController.text),

@@ -4,6 +4,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:hive/bloc/auth/auth_bloc.dart';
 import 'package:hive/constants/asset_storage_image.dart';
 import 'package:hive/modules/dashboard/views/dashboard.dart';
+import 'package:hive/modules/sign_in/sign_in.dart';
 import 'package:hive/routes/app_router.dart';
 
 part 'sign_up_controller.dart';
@@ -157,11 +158,9 @@ class _SignUpState extends State<SignUp> {
                                   minimumSize: const Size(double.infinity, 50),
                                   backgroundColor: Colors.white,
                                   shape: const StadiumBorder()),
-                              onPressed: state is Loading
-                                  ? null
-                                  : () {
-                                      _createAccountWithEmailAndPassword();
-                                    },
+                              onPressed: () {
+                                _createAccountWithEmailAndPassword();
+                              },
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -200,9 +199,13 @@ class _SignUpState extends State<SignUp> {
                       children: [
                         const Text("Already have an account?"),
                         TextButton(
-                          onPressed: () {
-                            RouterPageAnimation.routePageAnimation(
-                                context, RouterPageAnimation.goToSignIn());
+                          onPressed: () async {
+                            await Navigator.push(context,
+                                RouterPageAnimation.goToPage(SignIn()));
+                            // RouterPageAnimation.routePageAnimation(
+                            //     context,
+                            //     await Navigator.push(context,
+                            //         RouterPageAnimation.goToPage(SignIn())));
                           },
                           child: const Text("Sign In"),
                         )

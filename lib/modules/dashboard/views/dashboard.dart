@@ -48,7 +48,7 @@ class _DashBoardState extends State<DashBoard> {
         backgroundColor: Colors.white,
         color: Colors.grey.shade500,
         activeColor: const Color(0xffBA68C8),
-        style: TabStyle.reactCircle,
+        style: TabStyle.react,
         items: const [
           TabItem(icon: Icons.home, title: 'Home'),
           TabItem(icon: Icons.chat, title: 'Chat'),

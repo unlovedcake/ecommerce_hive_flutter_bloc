@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/Logger/my_logger.dart';
 import 'package:hive/instances/firebase_instances.dart';
 import 'package:hive/modules/otp_code/views/otp_code.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -40,7 +41,6 @@ class _PhoneAuthState extends State<PhoneAuth> {
               initialCountryCode: 'PH',
               onChanged: (phone) {
                 phoneController.text = phone.completeNumber;
-                print(phone.completeNumber);
               },
             ),
           ),
@@ -58,56 +58,36 @@ class _PhoneAuthState extends State<PhoneAuth> {
                 phoneNumber: phoneController.text,
                 timeout: const Duration(seconds: 60),
                 verificationCompleted: (PhoneAuthCredential credential) async {
+                  MyLogger.printInfo('Phone Verified ${credential.smsCode}');
                   await firebaseAuth.signInWithCredential(credential).then(
-                        (value) => print('Logged In Successfully'),
+                        (value) => MyLogger.printInfo(
+                            'Phone Verified ${credential.smsCode}'),
                       );
 
                   // Navigator.of(context).pushNamedAndRemoveUntil(
                   //     '/otp_code', (Route route) => false);
                 },
                 verificationFailed: (FirebaseAuthException e) {
-                  print(e.message);
-                  print('error phone auth');
+                  MyLogger.printError(e);
                 },
                 codeSent: (String verificationId, int? resendToken) {
                   receivedID = verificationId;
 
-                  print('Received ID:' + receivedID);
+                  MyLogger.printInfo('Received ID:$receivedID');
 
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => OtpCode(title: receivedID),
+                      builder: (context) => OtpCode(verificationId: receivedID),
                     ),
                   );
-
-                  setState(() {});
                 },
                 codeAutoRetrievalTimeout: (String verificationId) {
-                  print('TimeOut');
+                  MyLogger.printInfo('TimeOut');
                 },
               );
             },
           ),
-          const SizedBox(
-            height: 20,
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                backgroundColor: Colors.blue,
-                shape: const StadiumBorder()),
-            child: const Text('OTP CODE'),
-            onPressed: () async {
-              PhoneAuthCredential credential = PhoneAuthProvider.credential(
-                verificationId: receivedID,
-                smsCode: '123456',
-              );
-              await firebaseAuth
-                  .signInWithCredential(credential)
-                  .then((value) => print('User Login In Successful'));
-            },
-          )
         ],
       ),
     ));

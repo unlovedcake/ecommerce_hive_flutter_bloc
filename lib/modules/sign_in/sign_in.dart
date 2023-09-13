@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:hive/bloc/auth/auth_bloc.dart';
 import 'package:hive/constants/asset_storage_image.dart';
 import 'package:hive/modules/dashboard/views/dashboard.dart';
+import 'package:hive/modules/sign_up/sign_up.dart';
 import 'package:hive/routes/app_router.dart';
 
 part 'sign_in_controller.dart';
@@ -54,7 +57,7 @@ class _SignInState extends State<SignIn> {
 
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => DashBoard()),
+              MaterialPageRoute(builder: (context) => const DashBoard()),
               (route) => false,
             );
           }
@@ -148,35 +151,22 @@ class _SignInState extends State<SignIn> {
                                         const Size(double.infinity, 50),
                                     backgroundColor: Colors.white,
                                     shape: const StadiumBorder()),
-                                onPressed: state is Loading
-                                    ? null
-                                    : () {
-                                        _authenticateWithEmailAndPassword();
-                                      },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Text(
-                                      'Sign In',
-                                      style: TextStyle(
-                                          color: Colors.blue,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    const SizedBox(
-                                      width: 20,
-                                    ),
-                                    state is Loading
-                                        ? const SpinKitFadingCircle(
-                                            color: Colors.blue,
-                                            size: 40.0,
-                                          )
-                                        : const Icon(
-                                            Icons.arrow_forward_ios,
-                                            color: Colors.blue,
-                                            size: 20,
-                                          )
-                                  ],
+                                onPressed: () async {
+                                  _authenticateWithEmailAndPassword();
+                                  // final recieveport = ReceivePort();
+                                  // await Isolate.spawn(
+                                  //     _authenticateWithEmailAndPassword(),
+                                  //     recieveport.sendPort);
+                                  // recieveport.listen((message) {
+                                  //   print(message);
+                                  // });
+                                },
+                                child: const Text(
+                                  'Sign In',
+                                  style: TextStyle(
+                                      color: Colors.blue,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               )
                             ],
@@ -247,9 +237,17 @@ class _SignInState extends State<SignIn> {
                         children: [
                           const Text("Don't have an account?"),
                           TextButton(
-                            onPressed: () {
-                              RouterPageAnimation.routePageAnimation(
-                                  context, RouterPageAnimation.goToSignUp());
+                            onPressed: () async {
+                              await Navigator.push(
+                                  context,
+                                  RouterPageAnimation.goToSignUp(
+                                      const SignUp()));
+                              // RouterPageAnimation.routePageAnimation(
+                              //     context,
+                              //     await Navigator.push(context,
+                              //         RouterPageAnimation.goToPage(SignUp())));
+                              // RouterPageAnimation.routePageAnimation(
+                              //     context, RouterPageAnimation.goToSignUp());
                             },
                             child: const Text("Sign Up"),
                           )
@@ -270,9 +268,10 @@ class _SignInState extends State<SignIn> {
     AlertDialog alert = AlertDialog(
       content: Row(
         children: [
-          CircularProgressIndicator(),
+          const CircularProgressIndicator(),
           Container(
-              margin: EdgeInsets.only(left: 7), child: Text("Loading...")),
+              margin: const EdgeInsets.only(left: 7),
+              child: const Text("Loading...")),
         ],
       ),
     );

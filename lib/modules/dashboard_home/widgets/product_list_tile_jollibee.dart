@@ -30,13 +30,6 @@ class _Product_List_Tile_JollibeeState
       if (scrollController.position.pixels ==
               scrollController.position.maxScrollExtent &&
           isMoreData) {
-        // BlocProvider.of<ProductBloc>(context).add(
-        //   GetProductsJolliBeeEvent('Jollibee'),
-        // );
-        //  BlocProvider.of<FavoritesBloc>(context).add(
-        //   GetProductsFavoritesEvent(),
-        // );
-
         context.read<ProductBloc>().add(GetProductsJolliBeeEvent('Jollibee'));
 
         // context.read<FavoritesBloc>().add(GetProductsFavoritesEvent());
@@ -83,206 +76,224 @@ class _Product_List_Tile_JollibeeState
         },
         builder: (context, state) {
           if (state.status == Status.JOLLIBEECOMPLETED) {
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GridView.builder(
-                controller: scrollController,
-                //physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                ),
-                itemCount: productJollibee.value.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final product = productJollibee.value[index];
+            return Column(
+              children: [
+                Expanded(
+                    child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: GridView.builder(
+                    controller: scrollController,
+                    //physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                    ),
+                    itemCount: productJollibee.value.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final product = productJollibee.value[index];
 
-                  return Card(
-                    elevation: 4.0,
-                    child: Ink(
-                      decoration: BoxDecoration(color: Colors.white),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => ProductProfile(
-                                product: product,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Stack(
-                          children: [
-                            Column(
+                      return Card(
+                        elevation: 4.0,
+                        child: Ink(
+                          decoration: const BoxDecoration(color: Colors.white),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => ProductProfile(
+                                    product: product,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Stack(
                               children: [
-                                Expanded(
-                                  child: AspectRatio(
-                                    aspectRatio: 4 / 2,
-                                    child: Hero(
-                                      tag: product.id,
-                                      child: CachedNetworkImage(
-                                        imageUrl: product.imageUrl,
-                                        fit: BoxFit.cover,
-                                        placeholder: (
-                                          context,
-                                          url,
-                                        ) =>
-                                            Container(
-                                                alignment: Alignment.center,
-                                                width: 20,
-                                                height: 20,
-                                                child:
-                                                    const CircularProgressIndicator()),
-                                        errorWidget: (context, url, error) =>
-                                            const Icon(Icons.error),
+                                Column(
+                                  children: [
+                                    Expanded(
+                                      child: AspectRatio(
+                                        aspectRatio: 4 / 2,
+                                        child: Hero(
+                                          tag: product.id,
+                                          child: CachedNetworkImage(
+                                            imageUrl: product.imageUrl,
+                                            fit: BoxFit.cover,
+                                            placeholder: (
+                                              context,
+                                              url,
+                                            ) =>
+                                                Container(
+                                                    alignment: Alignment.center,
+                                                    width: 20,
+                                                    height: 20,
+                                                    child:
+                                                        const CircularProgressIndicator()),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    const Icon(Icons.error),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 8,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        product.name,
-                                        style: GoogleFonts.roboto(
-                                            textStyle: TextStyle(
-                                          color: const Color(0xffBA68C8),
-                                        )),
+                                    const SizedBox(
+                                      height: 8,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            product.name,
+                                            style: GoogleFonts.roboto(
+                                                textStyle: const TextStyle(
+                                              color: Color(0xffBA68C8),
+                                            )),
+                                          ),
+                                          Text(product.price),
+                                          const SizedBox(
+                                            height: 8,
+                                          ),
+                                        ],
                                       ),
-                                      Text(product.price),
-                                      const SizedBox(
-                                        height: 8,
-                                      ),
-                                    ],
-                                  ),
-                                )
+                                    )
+                                  ],
+                                ),
+                                _ButtonHeartJollibee(
+                                  id: product.id,
+                                  favoriteDocumentIds: favoriteDocumentIds,
+                                ),
                               ],
                             ),
-                            _ButtonHeartJollibee(
-                              id: product.id,
-                              favoriteDocumentIds: favoriteDocumentIds,
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                  // return InkWell(
-                  //   onTap: () {
-                  //     Navigator.of(context).push(
-                  //       MaterialPageRoute(
-                  //         builder: (context) => ProductProfile(
-                  //           product: product,
-                  //         ),
-                  //       ),
-                  //     );
-                  //   },
-                  //   child: Card(
-                  //     elevation: 4.0,
-                  //     child: Stack(
-                  //       children: [
-                  //         Column(
-                  //           children: [
-                  //             Expanded(
-                  //               child: AspectRatio(
-                  //                 aspectRatio: 4 / 2,
-                  //                 child: Hero(
-                  //                   tag: product.id,
-                  //                   child: Material(
-                  //                     child: Ink.image(
-                  //                       image: CachedNetworkImageProvider(
-                  //                         product.imageUrl,
-                  //                       ),
-                  //                       fit: BoxFit.cover,
-                  //                       child: InkWell(
-                  //                         onTap: () {
-                  //                           Navigator.of(context).push(
-                  //                             MaterialPageRoute(
-                  //                               builder: (context) =>
-                  //                                   ProductProfile(
-                  //                                 product: product,
-                  //                               ),
-                  //                             ),
-                  //                           );
-                  //                         },
-                  //                       ),
-                  //                     ),
-                  //                   ),
-                  //                   // child: CachedNetworkImage(
-                  //                   //   imageUrl: product.imageUrl,
-                  //                   //   placeholder: (
-                  //                   //     context,
-                  //                   //     url,
-                  //                   //   ) =>
-                  //                   //       Container(
-                  //                   //           alignment: Alignment.center,
-                  //                   //           width: 20,
-                  //                   //           height: 20,
-                  //                   //           child:
-                  //                   //               const CircularProgressIndicator()),
-                  //                   //   errorWidget: (context, url, error) =>
-                  //                   //       const Icon(Icons.error),
-                  //                   // ),
-                  //                 ),
-                  //               ),
-                  //             ),
-                  //             const SizedBox(
-                  //               height: 8,
-                  //             ),
-                  //             Padding(
-                  //               padding: const EdgeInsets.all(8),
-                  //               child: Column(
-                  //                 children: [
-                  //                   Text(
-                  //                     product.name,
-                  //                     style: GoogleFonts.roboto(
-                  //                         textStyle: TextStyle(
-                  //                       color: const Color(0xffBA68C8),
-                  //                     )),
-                  //                   ),
-                  //                   Text(product.price),
-                  //                   const SizedBox(
-                  //                     height: 8,
-                  //                   ),
-                  //                 ],
-                  //               ),
-                  //             )
-                  //           ],
-                  //         ),
-                  //         Positioned(
-                  //             top: 8.0,
-                  //             left: 4.0,
-                  //             child: RichText(
-                  //               text: const TextSpan(
-                  //                 style: TextStyle(
-                  //                     fontSize: 16.0,
-                  //                     color: Colors.red,
-                  //                     fontWeight: FontWeight.bold),
-                  //                 children: <TextSpan>[
-                  //                   TextSpan(text: 'Discount '),
-                  //                   TextSpan(
-                  //                     text: '10% ',
-                  //                     style: TextStyle(
-                  //                         color: Colors.black,
-                  //                         fontWeight: FontWeight.bold,
-                  //                         fontStyle: FontStyle.italic),
-                  //                   ),
-                  //                 ],
-                  //               ),
-                  //             )),
-                  //         Positioned(
-                  //           top: 4.0,
-                  //           right: 0.0,
-                  //           child: ButtonHeartJollibee(id: product.id),
-                  //         )
-                  //       ],
-                  //     ),
-                  //   ),
-                  // );
-                },
-              ),
+                      );
+                      // return InkWell(
+                      //   onTap: () {
+                      //     Navigator.of(context).push(
+                      //       MaterialPageRoute(
+                      //         builder: (context) => ProductProfile(
+                      //           product: product,
+                      //         ),
+                      //       ),
+                      //     );
+                      //   },
+                      //   child: Card(
+                      //     elevation: 4.0,
+                      //     child: Stack(
+                      //       children: [
+                      //         Column(
+                      //           children: [
+                      //             Expanded(
+                      //               child: AspectRatio(
+                      //                 aspectRatio: 4 / 2,
+                      //                 child: Hero(
+                      //                   tag: product.id,
+                      //                   child: Material(
+                      //                     child: Ink.image(
+                      //                       image: CachedNetworkImageProvider(
+                      //                         product.imageUrl,
+                      //                       ),
+                      //                       fit: BoxFit.cover,
+                      //                       child: InkWell(
+                      //                         onTap: () {
+                      //                           Navigator.of(context).push(
+                      //                             MaterialPageRoute(
+                      //                               builder: (context) =>
+                      //                                   ProductProfile(
+                      //                                 product: product,
+                      //                               ),
+                      //                             ),
+                      //                           );
+                      //                         },
+                      //                       ),
+                      //                     ),
+                      //                   ),
+                      //                   // child: CachedNetworkImage(
+                      //                   //   imageUrl: product.imageUrl,
+                      //                   //   placeholder: (
+                      //                   //     context,
+                      //                   //     url,
+                      //                   //   ) =>
+                      //                   //       Container(
+                      //                   //           alignment: Alignment.center,
+                      //                   //           width: 20,
+                      //                   //           height: 20,
+                      //                   //           child:
+                      //                   //               const CircularProgressIndicator()),
+                      //                   //   errorWidget: (context, url, error) =>
+                      //                   //       const Icon(Icons.error),
+                      //                   // ),
+                      //                 ),
+                      //               ),
+                      //             ),
+                      //             const SizedBox(
+                      //               height: 8,
+                      //             ),
+                      //             Padding(
+                      //               padding: const EdgeInsets.all(8),
+                      //               child: Column(
+                      //                 children: [
+                      //                   Text(
+                      //                     product.name,
+                      //                     style: GoogleFonts.roboto(
+                      //                         textStyle: TextStyle(
+                      //                       color: const Color(0xffBA68C8),
+                      //                     )),
+                      //                   ),
+                      //                   Text(product.price),
+                      //                   const SizedBox(
+                      //                     height: 8,
+                      //                   ),
+                      //                 ],
+                      //               ),
+                      //             )
+                      //           ],
+                      //         ),
+                      //         Positioned(
+                      //             top: 8.0,
+                      //             left: 4.0,
+                      //             child: RichText(
+                      //               text: const TextSpan(
+                      //                 style: TextStyle(
+                      //                     fontSize: 16.0,
+                      //                     color: Colors.red,
+                      //                     fontWeight: FontWeight.bold),
+                      //                 children: <TextSpan>[
+                      //                   TextSpan(text: 'Discount '),
+                      //                   TextSpan(
+                      //                     text: '10% ',
+                      //                     style: TextStyle(
+                      //                         color: Colors.black,
+                      //                         fontWeight: FontWeight.bold,
+                      //                         fontStyle: FontStyle.italic),
+                      //                   ),
+                      //                 ],
+                      //               ),
+                      //             )),
+                      //         Positioned(
+                      //           top: 4.0,
+                      //           right: 0.0,
+                      //           child: ButtonHeartJollibee(id: product.id),
+                      //         )
+                      //       ],
+                      //     ),
+                      //   ),
+                      // );
+                    },
+                  ),
+                )),
+                BlocBuilder<ProductBloc, ProductState>(
+                  builder: (context, state) {
+                    if (state.status == Status.LOADING) {
+                      return const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Text('Loading...'));
+                    } else {
+                      return const SizedBox();
+                    }
+                  },
+                ),
+              ],
             );
           } else {
             return Padding(

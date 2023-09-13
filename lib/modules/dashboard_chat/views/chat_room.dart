@@ -1,7 +1,16 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/Logger/my_logger.dart';
+import 'package:hive/bloc/chat/chat_bloc.dart';
 import 'package:hive/constants/sendbird_instance.dart';
+import 'package:hive/instances/firebase_instances.dart';
 import 'package:hive/widgets/circular_avatar_widget.dart';
+import 'package:hive/widgets/dialog.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sendbird_sdk/core/message/base_message.dart';
 import 'package:sendbird_sdk/sendbird_sdk.dart';
 
@@ -15,23 +24,67 @@ class ChatRoom extends StatefulWidget {
 }
 
 class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
-  final _messages = <BaseMessage>[];
+  //final _messages = <BaseMessage>[];
   TextEditingController _messageController = TextEditingController();
 
+  final ValueNotifier<List<BaseMessage>> _messages =
+      ValueNotifier<List<BaseMessage>>([]);
+
   PreviousMessageListQuery? query;
+  BaseChannel? channel;
 
   late final ChannelEventHandler _channelHandler;
+  final ImagePicker picker = ImagePicker();
+  File? file;
+
+  final scrollController = ScrollController();
+  double _previousOffset = 0;
 
   @override
   void initState() {
     super.initState();
+    limitMessages = 20;
 
+    BlocProvider.of<ChatBloc>(context).add(
+      GetChatEvent(widget.channelUrl),
+    );
+
+    _markMessagesAsRead();
+
+    scrollController.addListener(() {
+      if (scrollController.position.pixels ==
+          scrollController.position.maxScrollExtent) {
+        // BlocProvider.of<ChatBloc>(context).add(
+        //   GetChatEvent(widget.channelUrl),
+        // );
+      } else if (scrollController.offset <=
+              scrollController.position.minScrollExtent &&
+          !scrollController.position.outOfRange) {
+        print("Scrolling up");
+        limitMessages += 10;
+        BlocProvider.of<ChatBloc>(context).add(
+          GetChatEvent(widget.channelUrl),
+        );
+      }
+    });
+    // scrollController.addListener(() {
+    //   if (scrollController.offset > _previousOffset) {
+    //     // User is scrolling down
+    //     print("Scrolling down");
+    //   } else if (scrollController.offset < _previousOffset) {
+    //     // User is scrolling up
+    //     print("Scrolling up");
+    //   }
+
+    //   _previousOffset = scrollController.offset;
+    // });
+  }
+
+  Future<void> _previousMessagesListQuery() async {
     query = PreviousMessageListQuery(
       channelType: ChannelType.group,
       channelUrl: widget.channelUrl,
     )..messageTypeFilter = MessageTypeFilter.all;
-    _fetchLatestMessages();
-    _markMessagesAsRead();
   }
 
   @override
@@ -41,17 +94,14 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
     final currentChannelUrl = widget.channelUrl;
     final messageInCurrentChannel = channel.channelUrl == currentChannelUrl;
     if (messageInCurrentChannel) {
-      _messages.add(message);
+      _messages.value.add(message);
     }
-
-    print('new message');
-    print(message);
   }
 
   @override
   void onChannelChanged(BaseChannel channel) {
     super.onChannelChanged(channel);
-    MyLogger.printInfo('CHANGES HAS BEEN MADE IN{channel.channelUrl}');
+    MyLogger.printInfo('CHANGES HAS BEEN MADE IN{channel.channelUrl');
     final currentChannelUrl = widget.channelUrl;
     final isGroupChannel = channel is GroupChannel;
     final isTheCurrentChannel = channel.channelUrl == currentChannelUrl;
@@ -65,13 +115,10 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
     }
 
     _addNewlySentMessage(channel.lastMessage!);
-
-    print('onChannelChanged');
-    print(channel.lastMessage!);
   }
 
   void _addNewlySentMessage(BaseMessage baseMessage) {
-    _messages.add(baseMessage);
+    _messages.value.add(baseMessage);
 
     MyLogger.printInfo('_addNewlySentMessage');
   }
@@ -86,17 +133,15 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
     }
   }
 
-  Future<void> _fetchLatestMessages() async {
+  Future<void> _fetchMoreMessages() async {
     try {
-      query!.limit = 10;
-      final results = await query!.loadNext();
-      _messages.addAll(results);
-      _messages.sort((a, b) {
+      query!.limit = 5;
+      final previousMessages = await query!.loadNext();
+
+      _messages.value.addAll(previousMessages);
+      _messages.value.sort((a, b) {
         return a.createdAt.compareTo(b.createdAt);
       });
-
-      print('new messages');
-      print(results);
     } on Exception catch (e) {
       MyLogger.printError(e);
     } catch (e) {
@@ -104,54 +149,115 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
     }
   }
 
-  Future<void> _fetchMoreMessages() async {
+  Future<void> scrollToBottom() async {
     try {
-      query!.limit = 5;
-      final previousMessages = await query!.loadNext();
-
-      _messages.addAll(previousMessages);
-      _messages.sort((a, b) {
-        return a.createdAt.compareTo(b.createdAt);
-      });
-    } on Exception catch (e) {
-      MyLogger.printError(e);
-    } catch (e) {
-      MyLogger.printError(e);
+      if (scrollController.hasClients) {
+        // Removing this delay will cause the auto scroll to not work properly.
+        // This ensures that we auto scroll all the way down.
+        await Future.delayed(const Duration(milliseconds: 100));
+        final end = scrollController.position.maxScrollExtent;
+        const curve = Curves.easeIn;
+        const duration = Duration(milliseconds: 300);
+        scrollController.animateTo(end, curve: curve, duration: duration);
+      }
+      MyLogger.printInfo('AUTO SCROLL TO END OF THE LIST');
+    } catch (error) {
+      MyLogger.printError(error);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
       body: Column(
         children: [
-          Expanded(
-            child: ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              padding: const EdgeInsets.all(20),
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final baseMessage = _messages[index];
-                switch (baseMessage.runtimeType) {
-                  case UserMessage:
-                    return getProperMessageTile(baseMessage);
-                  case FileMessage:
-                    return const Text('File Message');
-                  // case AdminMessage:
-                  //   return _AdminMessageListTile(baseMessage: baseMessage);
-                  default:
-                    return const SizedBox();
-                }
-              },
-            ),
+          BlocConsumer<ChatBloc, ChatState>(
+            listenWhen: (context, state) {
+              return state.status == ChatStatus.FETCHED;
+            },
+            listener: (context, state) {
+              if (state.status == ChatStatus.FETCHED) {
+              } else if (state.status == ChatStatus.ERROR) {}
+            },
+            buildWhen: (context, state) {
+              return state.status == ChatStatus.FETCHED;
+            },
+            builder: (context, state) {
+              if (state.status == ChatStatus.FETCHED) {
+                //scrollToBottom();
+                return Expanded(
+                  child: ListView.separated(
+                    controller: scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 10),
+                    itemCount: state.baseMessages!.length,
+                    itemBuilder: (context, index) {
+                      final baseMessage = state.baseMessages![index];
+
+                      switch (baseMessage.runtimeType) {
+                        case UserMessage:
+                          return getProperMessageTile(baseMessage);
+                        case FileMessage:
+                          return getProperMessageTile(baseMessage);
+
+                        default:
+                          return const SizedBox();
+                      }
+                    },
+                  ),
+                );
+              } else {
+                return Container(child: Text('No State'));
+              }
+            },
           ),
           Container(
             color: Colors.white,
             child: Row(
               children: [
+                IconButton(
+                  onPressed: () => dialogComponent(
+                    context,
+                    title: 'File Upload',
+                    content: 'Choose type to upload',
+                    buttonText1: 'Image',
+                    onTap1: () async {
+                      try {
+                        final _file =
+                            await picker.pickImage(source: ImageSource.gallery);
+                        if (_file == null) {
+                          throw Exception('File not chosen');
+                        }
+                        file = File(_file.path);
+                      } catch (e) {
+                        throw Exception('File Message Send Failed');
+                      }
+
+                      setState(() {});
+                    },
+                    buttonText2: 'Video',
+                    onTap2: () async {
+                      try {
+                        final _file =
+                            await picker.pickVideo(source: ImageSource.gallery);
+                        if (_file == null) {
+                          throw Exception('File not chosen');
+                        }
+                        file = File(_file.path);
+                      } catch (e) {
+                        throw Exception('File Message Send Failed');
+                      }
+
+                      setState(() {});
+                    },
+                  ),
+                  icon: const Icon(Icons.add),
+                ),
                 SizedBox(width: 20),
                 Expanded(
                   child: TextField(
@@ -163,9 +269,24 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
                 ),
                 SizedBox(width: 15),
                 IconButton(
-                    onPressed: () {
-                      sendTextMessage();
-                      _fetchLatestMessages();
+                    onPressed: () async {
+                      if (file != null) {
+                        await sendFileMessage();
+
+                        // channel!.sendFileMessage(
+                        //   FileMessageParams.withFile(file!, name: "Example"),
+                        //   onCompleted: (message, error) => {
+                        //     file = null,
+                        //   },
+                        // );
+                      } else {
+                        await sendTextMessage();
+                        BlocProvider.of<ChatBloc>(context).add(
+                          GetChatEvent(widget.channelUrl),
+                        );
+
+                        _messageController.clear();
+                      }
                     },
                     icon: Icon(Icons.send)),
                 SizedBox(width: 20),
@@ -175,6 +296,32 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
         ],
       ),
     );
+  }
+
+  Future<void> sendFileMessage() async {
+    try {
+      final params = FileMessageParams.withFile(file!, name: "Example")
+        ..mentionType = MentionType.channel
+        ..thumbnailSizes = [Size(100, 100), Size(200, 200)];
+
+      final channelUrl = widget.channelUrl;
+      final groupChannel = await GroupChannel.getChannel(channelUrl);
+
+      groupChannel.sendFileMessage(params, onCompleted: (message, error) {
+        if (error != null) {
+          MyLogger.printError(error);
+          throw Exception('$error');
+        } else {
+          // Showing of this newly sent message is handled in chat controller.
+          print('Message Sent');
+          MyLogger.printInfo('Message Sent');
+        }
+      });
+    } on Exception catch (e) {
+      MyLogger.printError(e);
+    } catch (e) {
+      MyLogger.printError(e);
+    }
   }
 
   Future<void> sendTextMessage() async {
@@ -227,26 +374,51 @@ class _MyMessageListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(
-            color: Colors.blue.withOpacity(0.15),
-          ),
-          borderRadius: const BorderRadius.all(Radius.circular(20)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text(
-            baseMessage.message,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  height: 1.5,
+      title: baseMessage is FileMessage
+          ? CachedNetworkImage(
+              height: 120,
+              width: 120,
+              fit: BoxFit.contain,
+              imageUrl: (baseMessage as FileMessage).secureUrl.toString(),
+              placeholder: (context, url) => const SizedBox(
+                width: 30,
+                height: 30,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
                 ),
-          ),
-        ),
-      ),
+              ),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
+            )
+          : Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(
+                  color: Colors.blue.withOpacity(0.15),
+                ),
+                borderRadius: const BorderRadius.all(Radius.circular(20)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  baseMessage.message,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        height: 1.5,
+                      ),
+                ),
+                // child: Text(
+                //   baseMessage.message,
+                //   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                //         fontSize: 14,
+                //         fontWeight: FontWeight.w400,
+                //         height: 1.5,
+                //       ),
+                // ),
+              ),
+            ),
       horizontalTitleGap: 10,
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -293,14 +465,32 @@ class _FriendMessageListTileWidget extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Text(
-            baseMessage.message,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  height: 1.5,
+          child: baseMessage.message is FileMessage
+              ? CachedNetworkImage(
+                  height: 120,
+                  width: 180,
+                  fit: BoxFit.cover,
+                  imageUrl: (baseMessage.message as FileMessage).secureUrl ??
+                      (baseMessage.message as FileMessage).url,
+                  placeholder: (context, url) => const SizedBox(
+                    width: 30,
+                    height: 30,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                )
+              : Text(
+                  baseMessage.message,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        height: 1.5,
+                      ),
                 ),
-          ),
         ),
       ),
     );

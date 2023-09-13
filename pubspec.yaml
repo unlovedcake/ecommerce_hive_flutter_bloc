@@ -76,6 +76,10 @@ dependencies:
   connectivity_plus: ^4.0.2
   liquid_pull_to_refresh: ^3.0.1
   flutter_rating_bar: ^4.0.1
+  firebase_crashlytics: ^3.3.5
+  pinput: ^3.0.1
+  firebase_app_check: ^0.1.5+2
+  image_picker: ^1.0.4
 
 dev_dependencies:
   flutter_test:

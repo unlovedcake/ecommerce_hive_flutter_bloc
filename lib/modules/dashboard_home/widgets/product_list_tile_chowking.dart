@@ -109,30 +109,30 @@ class _Product_List_Tile_ChowkingState
                               child: AspectRatio(
                                 aspectRatio: 4 / 3,
                                 child: Material(
-                                  child: CachedNetworkImage(
-                                    imageUrl: product.imageUrl,
-                                    placeholder: (
-                                      context,
-                                      url,
-                                    ) =>
-                                        Container(
-                                            alignment: Alignment.center,
-                                            width: 20,
-                                            height: 20,
-                                            child:
-                                                const CircularProgressIndicator()),
-                                    errorWidget: (context, url, error) =>
-                                        const Icon(Icons.error),
-                                  ),
-                                  // Ink.image(
-                                  //   image: NetworkImage(
-                                  //     product.imageUrl,
-                                  //   ),
-                                  //   fit: BoxFit.cover,
-                                  //   child: InkWell(
-                                  //     onTap: () {},
-                                  //   ),
+                                  // child: CachedNetworkImage(
+                                  //   imageUrl: product.imageUrl,
+                                  //   placeholder: (
+                                  //     context,
+                                  //     url,
+                                  //   ) =>
+                                  //       Container(
+                                  //           alignment: Alignment.center,
+                                  //           width: 20,
+                                  //           height: 20,
+                                  //           child:
+                                  //               const CircularProgressIndicator()),
+                                  //   errorWidget: (context, url, error) =>
+                                  //       const Icon(Icons.error),
                                   // ),
+                                  child: Ink.image(
+                                    image: NetworkImage(
+                                      product.imageUrl,
+                                    ),
+                                    fit: BoxFit.cover,
+                                    child: InkWell(
+                                      onTap: () {},
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

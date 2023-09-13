@@ -29,13 +29,16 @@ class _ChatState extends State<Chat> {
           title: Text('Chat'),
         ),
         body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Center(child: Text('Chat')),
-            ElevatedButton(
-                onPressed: () {
-                  createChannel();
-                },
-                child: Text('Create Channel')),
+            Center(
+              child: ElevatedButton(
+                  onPressed: () {
+                    createChannel();
+                  },
+                  child: Text('Chat to Admin')),
+            ),
           ],
         ));
   }
@@ -54,6 +57,7 @@ class _ChatState extends State<Chat> {
       MyLogger.printInfo('CHANNEL_URL: ${result.first.channelUrl}');
       channelUrl = result.first.channelUrl;
 
+      // ignore: use_build_context_synchronously
       Navigator.push(
         context,
         MaterialPageRoute(

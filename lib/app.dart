@@ -12,6 +12,7 @@ import 'package:responsive_framework/responsive_wrapper.dart';
 import 'package:responsive_framework/utils/scroll_behavior.dart';
 import 'bloc/Internet/internet_bloc.dart';
 import 'bloc/auth/auth_bloc.dart';
+import 'bloc/chat/chat_bloc.dart';
 import 'bloc/favorites_bloc/favorites_bloc.dart';
 import 'bloc/product_bloc/product_bloc.dart';
 import 'bloc/search_bloc/search_bloc.dart';
@@ -49,6 +50,10 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider<SearchBloc>(
             create: (searchContext) => SearchBloc(),
+            lazy: false,
+          ),
+          BlocProvider<ChatBloc>(
+            create: (searchContext) => ChatBloc(),
             lazy: false,
           ),
           // BlocProvider<InternetBloc>(

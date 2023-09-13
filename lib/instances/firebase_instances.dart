@@ -16,3 +16,5 @@ late DocumentSnapshot? lastDocumentSnapshotMcDonald;
 //Map<PolylineId, Polyline> polylines = {};
 List<Polyline> polylines = [];
 NearbyPlacesResponse nearbyPlacesResponse = NearbyPlacesResponse();
+
+int limitMessages = 20;

@@ -4,6 +4,7 @@ import 'package:hive/instances/firebase_instances.dart';
 import 'package:hive/modules/404_screen.dart';
 import 'package:hive/modules/dashboard/views/dashboard.dart';
 import 'package:hive/modules/otp_code/views/otp_code.dart';
+import 'package:hive/modules/phone_auth/views/phone_auth.dart';
 
 import 'package:hive/modules/sign_in/sign_in.dart';
 import 'package:hive/modules/sign_up/sign_up.dart';
@@ -54,8 +55,9 @@ class AppRouter {
 }
 
 class RouterPageAnimation {
-  static routePageAnimation(BuildContext context, Route route) {
-    Navigator.push(context, route);
+  static Future<Navigator> routePageAnimation(
+      BuildContext context, Navigator navigator) async {
+    return navigator;
   }
 
   static Route goToSignIn() {
@@ -85,7 +87,7 @@ class RouterPageAnimation {
     });
   }
 
-  static Route goToSignUp() {
+  static Route goToSignUp(Widget widget) {
     return PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) {
       return TweenAnimationBuilder(
@@ -107,7 +109,7 @@ class RouterPageAnimation {
                           center: const FractionalOffset(0.5, 0.5))
                       .createShader(rect);
                 },
-                child: const SignUp());
+                child: widget);
           });
     });
   }
@@ -137,5 +139,80 @@ class RouterPageAnimation {
                 child: const DashBoard());
           });
     });
+  }
+
+  static Route goToPage(Widget widget) {
+    return PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 800),
+      pageBuilder: (context, animation, secondaryAnimation) => widget,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        //   const begin = Offset(0.0, 1.0);
+        //   const end = Offset.zero;
+        //   const curve = Curves.ease;
+
+        //   // final tween = Tween(begin: begin, end: end);
+        //   // final curvedAnimation = CurvedAnimation(
+        //   //   parent: animation,
+        //   //   curve: curve,
+        //   // );
+
+        // var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
+        var tween = Tween(begin: begin, end: end).chain(
+          CurveTween(curve: curve),
+        );
+        var offsetAnimation = animation.drive(tween);
+
+        // return FadeTransition(
+        //   opacity: Tween<double>(
+        //     begin: 0,
+        //     end: 1,
+        //   ).animate(animation),
+
+        // child: SizeTransition(
+        //   sizeFactor: animation,
+        //   axis: Axis.horizontal,
+        //   axisAlignment: -1,
+        //     child: Padding(
+        //           padding: padding,
+        //           child: child(index),
+        //         ),
+        // ),
+        //
+        // child: Align(
+        //   child: SizeTransition(
+        //     sizeFactor: animation,
+        //     child: child,
+        //     axisAlignment: 0.0,
+        //   ),
+        // ),
+
+        // child: FadeTransition(
+        //   opacity:animation,
+        //   child: child,
+        // ),
+
+        // child: ScaleTransition(
+        //   scale: animation,
+        //   child: child,
+        // ),
+
+        // return SlideTransition(
+        //   position: Tween<Offset>(
+        //     begin: Offset(0, -0.1),
+        //     end: Offset.zero,
+        //   ).animate(animation),
+        //   child: child,
+        // );
+        return SlideTransition(
+          position: offsetAnimation,
+          //position: animation.drive(tween),
+          child: child,
+        );
+      },
+    );
   }
 }

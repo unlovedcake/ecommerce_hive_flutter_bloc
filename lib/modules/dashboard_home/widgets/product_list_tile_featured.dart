@@ -47,9 +47,6 @@ class _FeaturedProducts extends StatelessWidget {
                                           product.imageUrl,
                                         ),
                                         fit: BoxFit.cover,
-                                        child: InkWell(
-                                          onTap: () {},
-                                        ),
                                       ),
                                       // child: CachedNetworkImage(
                                       //   fit: BoxFit.cover,
@@ -84,6 +81,59 @@ class _FeaturedProducts extends StatelessWidget {
                           ],
                         ),
                       );
+                      // return SizedBox(
+                      //   width: 250,
+                      //   child: Ink(
+                      //     decoration: BoxDecoration(
+                      //       color: Colors.white,
+                      //       borderRadius: BorderRadius.circular(20),
+                      //     ),
+                      //     child: InkWell(
+                      //         onTap: () {},
+                      //         child: Column(
+                      //           children: [
+                      //             Expanded(
+                      //               child: AspectRatio(
+                      //                 aspectRatio: 4 / 2,
+                      //                 child: ClipRRect(
+                      //                   borderRadius: BorderRadius.circular(20),
+                      //                   child: CachedNetworkImage(
+                      //                     imageUrl: product.imageUrl,
+                      //                     fit: BoxFit.cover,
+                      //                     placeholder: (
+                      //                       context,
+                      //                       url,
+                      //                     ) =>
+                      //                         Container(
+                      //                             alignment: Alignment.center,
+                      //                             width: 20,
+                      //                             height: 20,
+                      //                             child:
+                      //                                 const CircularProgressIndicator()),
+                      //                     errorWidget: (context, url, error) =>
+                      //                         const Icon(Icons.error),
+                      //                   ),
+                      //                 ),
+                      //               ),
+                      //             ),
+                      //             const SizedBox(
+                      //               height: 8,
+                      //             ),
+                      //             Text(
+                      //               product.name,
+                      //               style: GoogleFonts.roboto(
+                      //                   textStyle: const TextStyle(
+                      //                 color: Colors.orangeAccent,
+                      //               )),
+                      //             ),
+                      //             const SizedBox(
+                      //               height: 4,
+                      //             ),
+                      //             Text(product.price)
+                      //           ],
+                      //         )),
+                      //   ),
+                      // );
                     },
                     separatorBuilder: (context, _) => const SizedBox(
                           width: 6,
