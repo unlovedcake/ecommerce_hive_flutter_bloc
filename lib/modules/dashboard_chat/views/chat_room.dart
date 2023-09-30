@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/Logger/my_logger.dart';
@@ -13,6 +14,7 @@ import 'package:hive/widgets/dialog.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sendbird_sdk/core/message/base_message.dart';
 import 'package:sendbird_sdk/sendbird_sdk.dart';
+import 'package:intl/intl.dart';
 
 class ChatRoom extends StatefulWidget {
   const ChatRoom({super.key, required this.channelUrl});
@@ -54,17 +56,14 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
     scrollController.addListener(() {
       if (scrollController.position.pixels ==
           scrollController.position.maxScrollExtent) {
-        // BlocProvider.of<ChatBloc>(context).add(
-        //   GetChatEvent(widget.channelUrl),
-        // );
-      } else if (scrollController.offset <=
-              scrollController.position.minScrollExtent &&
-          !scrollController.position.outOfRange) {
-        print("Scrolling up");
         limitMessages += 10;
         BlocProvider.of<ChatBloc>(context).add(
           GetChatEvent(widget.channelUrl),
         );
+      } else if (scrollController.offset <=
+              scrollController.position.minScrollExtent &&
+          !scrollController.position.outOfRange) {
+        print("Scrolling up");
       }
     });
     // scrollController.addListener(() {
@@ -166,6 +165,58 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
     }
   }
 
+  List<ChatMessage> asDashChatMessages(List<BaseMessage> messages) {
+    // BaseMessage is a Sendbird class
+    // ChatMessage is a DashChat class
+    List<ChatMessage> result = [];
+
+    if (messages.isNotEmpty) {
+      messages.forEach((message) {
+        User user = message.sender!;
+        if (user.nickname.isEmpty) {
+          return;
+        }
+        if (message is FileMessage) {
+          print('filemessage');
+          result.add(ChatMessage(
+              user: asDashChatUser(user),
+              createdAt: DateTime.fromMillisecondsSinceEpoch(message.createdAt),
+              medias: <ChatMedia>[
+                ChatMedia(
+                  url: (message as FileMessage).secureUrl.toString(),
+                  type: MediaType.image,
+                  fileName: 'image.png',
+                  isUploading: false,
+                ),
+              ]));
+        } else {
+          print('filemessages');
+          result.add(
+            ChatMessage(
+              createdAt: DateTime.fromMillisecondsSinceEpoch(message.createdAt),
+              text: messages is FileMessage
+                  ? (messages as FileMessage).secureUrl.toString()
+                  : message.message,
+              user: asDashChatUser(user),
+            ),
+          );
+        }
+      });
+    }
+    result.sort((a, b) {
+      return b.createdAt.compareTo(a.createdAt);
+    });
+    return result;
+  }
+
+  ChatUser asDashChatUser(User user) {
+    return ChatUser(
+      firstName: user.nickname,
+      id: user.userId,
+      profileImage: user.profileUrl,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -184,92 +235,32 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
               return state.status == ChatStatus.FETCHED;
             },
             builder: (context, state) {
+              ChatUser user = asDashChatUser(sendBird.currentUser!);
               if (state.status == ChatStatus.FETCHED) {
                 //scrollToBottom();
+
                 return Expanded(
-                  child: ListView.separated(
-                    controller: scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics(),
-                    ),
-                    padding: const EdgeInsets.all(20),
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 10),
-                    itemCount: state.baseMessages!.length,
-                    itemBuilder: (context, index) {
-                      final baseMessage = state.baseMessages![index];
-
-                      switch (baseMessage.runtimeType) {
-                        case UserMessage:
-                          return getProperMessageTile(baseMessage);
-                        case FileMessage:
-                          return getProperMessageTile(baseMessage);
-
-                        default:
-                          return const SizedBox();
-                      }
-                    },
-                  ),
-                );
-              } else {
-                return Container(child: Text('No State'));
-              }
-            },
-          ),
-          Container(
-            color: Colors.white,
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => dialogComponent(
-                    context,
-                    title: 'File Upload',
-                    content: 'Choose type to upload',
-                    buttonText1: 'Image',
-                    onTap1: () async {
-                      try {
-                        final _file =
-                            await picker.pickImage(source: ImageSource.gallery);
-                        if (_file == null) {
-                          throw Exception('File not chosen');
-                        }
-                        file = File(_file.path);
-                      } catch (e) {
-                        throw Exception('File Message Send Failed');
-                      }
-
-                      setState(() {});
-                    },
-                    buttonText2: 'Video',
-                    onTap2: () async {
-                      try {
-                        final _file =
-                            await picker.pickVideo(source: ImageSource.gallery);
-                        if (_file == null) {
-                          throw Exception('File not chosen');
-                        }
-                        file = File(_file.path);
-                      } catch (e) {
-                        throw Exception('File Message Send Failed');
-                      }
-
-                      setState(() {});
-                    },
-                  ),
-                  icon: const Icon(Icons.add),
-                ),
-                SizedBox(width: 20),
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Type your message...',
-                    ),
-                  ),
-                ),
-                SizedBox(width: 15),
-                IconButton(
-                    onPressed: () async {
+                  child: DashChat(
+                    //typingUsers: [user],
+                    key: Key(widget.channelUrl),
+                    currentUser: user,
+                    quickReplyOptions: QuickReplyOptions(
+                        onTapQuickReply: (QuickReply r) async {
+                      final ChatMessage message = ChatMessage(
+                        user: user,
+                        text: r.value ?? r.title,
+                        createdAt: DateTime.now(),
+                        quickReplies: <QuickReply>[
+                          QuickReply(title: 'Great!'),
+                          QuickReply(title: 'Awesome'),
+                        ],
+                      );
+                      await sendTextMessage(message.text.trim());
+                      BlocProvider.of<ChatBloc>(context).add(
+                        GetChatEvent(widget.channelUrl),
+                      );
+                    }),
+                    onSend: (ChatMessage message) async {
                       if (file != null) {
                         await sendFileMessage();
 
@@ -280,7 +271,7 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
                         //   },
                         // );
                       } else {
-                        await sendTextMessage();
+                        await sendTextMessage(message.text.trim());
                         BlocProvider.of<ChatBloc>(context).add(
                           GetChatEvent(widget.channelUrl),
                         );
@@ -288,11 +279,180 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
                         _messageController.clear();
                       }
                     },
-                    icon: Icon(Icons.send)),
-                SizedBox(width: 20),
-              ],
-            ),
+                    messages: asDashChatMessages(state.baseMessages!),
+                    inputOptions: InputOptions(
+                      leading: [
+                        IconButton(
+                            onPressed: () async {
+                              try {
+                                final _file = await picker.pickImage(
+                                    source: ImageSource.gallery);
+                                if (_file == null) {
+                                  throw Exception('File not chosen');
+                                }
+                                file = File(_file.path);
+                              } catch (e) {
+                                throw Exception('File Message Send Failed');
+                              }
+                            },
+                            icon: const Icon(Icons.photo)),
+                        IconButton(
+                            onPressed: () async {
+                              try {
+                                final _file = await picker.pickVideo(
+                                    source: ImageSource.gallery);
+                                if (_file == null) {
+                                  throw Exception('File not chosen');
+                                }
+                                file = File(_file.path);
+                              } catch (e) {
+                                throw Exception('File Message Send Failed');
+                              }
+                            },
+                            icon: const Icon(Icons.camera)),
+                      ],
+                      alwaysShowSend: true,
+                      textInputAction: TextInputAction.send,
+                      inputDecoration: const InputDecoration.collapsed(
+                          hintText: "Type a message here..."),
+                      sendOnEnter: true,
+                    ),
+                    messageListOptions: MessageListOptions(
+                      dateSeparatorFormat: DateFormat('MMM. dd E h:mm a'),
+                      chatFooterBuilder: const SizedBox(
+                        height: 10,
+                      ),
+                      scrollController: scrollController,
+                      // onLoadEarlier: () async {
+                      //   await Future.delayed(const Duration(seconds: 3));
+                      // },
+                    ),
+                    messageOptions: MessageOptions(
+                        onPressAvatar: (val) {},
+                        onPressMessage: (val) {},
+                        // bottom: (message, previousMessage, nextMessage) {
+                        //   return const Icon(
+                        //     Icons.check,
+                        //     size: 10,
+                        //   );
+                        // },
+                        // showTime: true,
+                        timeFormat: DateFormat('h:mm a'),
+                        timeTextColor: Colors.black,
+                        textColor: Colors.black,
+                        currentUserContainerColor: Colors.blue,
+                        containerColor: Colors.grey.shade300,
+                        showCurrentUserAvatar: false,
+                        messagePadding: const EdgeInsets.all(12)),
+                  ),
+                );
+                // return Expanded(
+                //   child: ListView.separated(
+                //     controller: scrollController,
+                //     physics: const AlwaysScrollableScrollPhysics(
+                //       parent: BouncingScrollPhysics(),
+                //     ),
+                //     padding: const EdgeInsets.all(20),
+                //     separatorBuilder: (context, index) =>
+                //         const SizedBox(height: 10),
+                //     itemCount: state.baseMessages!.length,
+                //     itemBuilder: (context, index) {
+                //       final baseMessage = state.baseMessages![index];
+
+                //       switch (baseMessage.runtimeType) {
+                //         case UserMessage:
+                //           return getProperMessageTile(baseMessage);
+                //         case FileMessage:
+                //           return getProperMessageTile(baseMessage);
+
+                //         default:
+                //           return const SizedBox();
+                //       }
+                //     },
+                //   ),
+                // );
+              } else {
+                return const Center(child: CircularProgressIndicator());
+              }
+            },
           ),
+          // Container(
+          //   color: Colors.white,
+          //   child: Row(
+          //     children: [
+          //       IconButton(
+          //         onPressed: () => dialogComponent(
+          //           context,
+          //           title: 'File Upload',
+          //           content: 'Choose type to upload',
+          //           buttonText1: 'Image',
+          //           onTap1: () async {
+          //             try {
+          //               final _file =
+          //                   await picker.pickImage(source: ImageSource.gallery);
+          //               if (_file == null) {
+          //                 throw Exception('File not chosen');
+          //               }
+          //               file = File(_file.path);
+          //             } catch (e) {
+          //               throw Exception('File Message Send Failed');
+          //             }
+
+          //             setState(() {});
+          //           },
+          //           buttonText2: 'Video',
+          //           onTap2: () async {
+          //             try {
+          //               final _file =
+          //                   await picker.pickVideo(source: ImageSource.gallery);
+          //               if (_file == null) {
+          //                 throw Exception('File not chosen');
+          //               }
+          //               file = File(_file.path);
+          //             } catch (e) {
+          //               throw Exception('File Message Send Failed');
+          //             }
+
+          //             setState(() {});
+          //           },
+          //         ),
+          //         icon: const Icon(Icons.add),
+          //       ),
+          //       SizedBox(width: 20),
+          //       Expanded(
+          //         child: TextField(
+          //           controller: _messageController,
+          //           decoration: InputDecoration(
+          //             hintText: 'Type your message...',
+          //           ),
+          //         ),
+          //       ),
+          //       SizedBox(width: 15),
+          //       IconButton(
+          //           onPressed: () async {
+          //             if (file != null) {
+          //               await sendFileMessage();
+
+          //               // channel!.sendFileMessage(
+          //               //   FileMessageParams.withFile(file!, name: "Example"),
+          //               //   onCompleted: (message, error) => {
+          //               //     file = null,
+          //               //   },
+          //               // );
+          //             } else {
+          //               // await sendTextMessage();
+          //               // BlocProvider.of<ChatBloc>(context).add(
+          //               //   GetChatEvent(widget.channelUrl),
+          //               // );
+
+          //               // _messageController.clear();
+          //             }
+          //           },
+          //           icon: Icon(Icons.send)),
+          //       SizedBox(width: 20),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );
@@ -302,7 +462,7 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
     try {
       final params = FileMessageParams.withFile(file!, name: "Example")
         ..mentionType = MentionType.channel
-        ..thumbnailSizes = [Size(100, 100), Size(200, 200)];
+        ..thumbnailSizes = [const Size(100, 100), const Size(200, 200)];
 
       final channelUrl = widget.channelUrl;
       final groupChannel = await GroupChannel.getChannel(channelUrl);
@@ -324,9 +484,9 @@ class _ChatRoomState extends State<ChatRoom> with ChannelEventHandler {
     }
   }
 
-  Future<void> sendTextMessage() async {
+  Future<void> sendTextMessage(message) async {
     try {
-      final message = _messageController.text.trim();
+      //final message = _messageController.text.trim();
       final params = UserMessageParams(message: message)
         ..mentionType = MentionType.channel
         ..pushOption = PushNotificationDeliveryOption.normal;

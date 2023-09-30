@@ -135,18 +135,19 @@ class AuthRepository {
   }) async {
     try {
       await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
+          .signInWithEmailAndPassword(email: email, password: password)
+          .then((value) async {
+        MyLogger.printInfo('You are now logged in.');
 
-      MyLogger.printInfo('You are now logged in.');
+        final sendBirdUser =
+            await getSendbirdUser(_firebaseAuth.currentUser!.uid);
 
-      final sendBirdUser =
-          await getSendbirdUser(_firebaseAuth.currentUser!.uid);
-
-      await sendBird.connect(
-        sendBirdUser.userId,
-        accessToken: sendBirdUser.accessToken,
-      );
-      MyLogger.printInfo('CONNECTED TO SENDBIRD');
+        await sendBird.connect(
+          sendBirdUser.userId,
+          accessToken: sendBirdUser.accessToken,
+        );
+        MyLogger.printInfo('CONNECTED TO SENDBIRD');
+      });
     }
     // on FirebaseAuthException catch (e) {
     //   MyLogger.printError(e);
@@ -158,7 +159,15 @@ class AuthRepository {
     // }
     catch (e) {
       MyLogger.printError(e);
-      throw Exception(e.toString());
+      if (e.toString().contains('user-not-found')) {
+        throw ('User Not Found');
+      } else if (e.toString().contains('password is invalid')) {
+        throw ('Password Invalid');
+      } else if (e.toString().contains('interrupted connection')) {
+        throw ('No Internet Access');
+      } else {
+        throw ('Something went wrong...');
+      }
     }
   }
 

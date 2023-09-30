@@ -48,6 +48,7 @@ class _SignInState extends State<SignIn> {
           } else if (state is AuthErrorSignIn) {
             ScaffoldMessenger.of(context)
                 .showSnackBar(SnackBar(content: Text(state.error)));
+            Navigator.pop(context);
           } else if (state is Authenticated) {
             // RouterPageAnimation.routePageAnimation(
             //     context, RouterPageAnimation.goToDashBoard());
