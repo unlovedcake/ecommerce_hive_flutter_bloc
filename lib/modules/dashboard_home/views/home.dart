@@ -4,17 +4,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/Logger/my_logger.dart';
 import 'package:hive/bloc/Internet/internet_bloc.dart';
+import 'package:hive/bloc/add_to_cart/add_to_cart_bloc.dart';
 import 'package:hive/bloc/auth/auth_bloc.dart';
 import 'package:hive/bloc/favorites_bloc/favorites_bloc.dart';
 import 'package:hive/bloc/product_bloc/product_bloc.dart';
+import 'package:hive/constants/sendbird_instance.dart';
 import 'package:hive/instances/firebase_instances.dart';
 import 'package:hive/models/product_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:hive/modules/cart_item/views/cart_item.dart';
 import 'package:hive/modules/product_profile/views/product_profile.dart';
 import 'package:hive/modules/sign_in/sign_in.dart';
+import 'package:hive/routes/app_router.dart';
 import 'package:hive/widgets/circular_avatar_widget.dart';
 import 'package:shimmer/shimmer.dart';
-
+import 'package:badges/badges.dart' as badges;
 part '../controllers/dashboard_home_controller.dart';
 part '../widgets/product_list_tile_jollibee.dart';
 part '../widgets/product_list_tile_chowking.dart';
@@ -29,7 +33,7 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with AutomaticKeepAliveClientMixin {
+class _HomeState extends State<Home> {
   final ValueNotifier<int> _index = ValueNotifier<int>(0);
 
   @override
@@ -75,9 +79,16 @@ class _HomeState extends State<Home> with AutomaticKeepAliveClientMixin {
     }
   }
 
+  final totalQuantity = ValueNotifier<int>(0);
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    // super.build(context);
+
+    totalQuantity.value = addToCartsListItem.fold(
+      0,
+      (int previousValue, product) =>
+          previousValue + (int.parse(product['quantity'])),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -105,6 +116,93 @@ class _HomeState extends State<Home> with AutomaticKeepAliveClientMixin {
         //   ),
         // ),
         actions: [
+          BlocConsumer<AddToCartBloc, AddToCartState>(
+            listenWhen: (context, state) {
+              return state.status == AddToCartStatus.COMPLETED;
+            },
+            listener: (context, state) {
+              if (state.status == AddToCartStatus.COMPLETED) {
+              } else if (state.status == AddToCartStatus.ERROR) {}
+            },
+            buildWhen: (context, state) {
+              return state.status == AddToCartStatus.COMPLETED;
+            },
+            builder: (context, state) {
+              if (state.status == AddToCartStatus.COMPLETED) {
+                return state.quantityItem == null || state.quantityItem == 0
+                    ? const Icon(Icons.shopping_cart)
+                    : badges.Badge(
+                        position: badges.BadgePosition.topEnd(top: 0, end: 3),
+                        badgeAnimation: const badges.BadgeAnimation.fade(
+                          disappearanceFadeAnimationDuration:
+                              Duration(milliseconds: 200),
+                          curve: Curves.easeInCubic,
+                        ),
+                        showBadge: true,
+                        badgeStyle: const badges.BadgeStyle(
+                          badgeColor: Colors.red,
+                        ),
+                        badgeContent: Text(
+                          state.quantityItem.toString(),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        child: IconButton(
+                            icon: const Icon(Icons.shopping_cart),
+                            onPressed: () {
+                              BlocProvider.of<AddToCartBloc>(context).add(
+                                AddCartQuantityItemEvent(addToCartsListItem),
+                              );
+                              Navigator.push(
+                                  context,
+                                  RouterPageAnimation.goToPage(
+                                      const CartItem()));
+                            }),
+                      );
+              } else {
+                return const Icon(Icons.shopping_cart);
+              }
+            },
+          ),
+          // ValueListenableBuilder(
+          //   builder: (BuildContext context, value, Widget? child) {
+          //     return badges.Badge(
+          //       position: badges.BadgePosition.topEnd(top: 0, end: 3),
+          //       badgeAnimation: badges.BadgeAnimation.slide(
+          //           // disappearanceFadeAnimationDuration: Duration(milliseconds: 200),
+          //           // curve: Curves.easeInCubic,
+          //           ),
+          //       showBadge: true,
+          //       badgeStyle: badges.BadgeStyle(
+          //         badgeColor: Colors.blue,
+          //       ),
+          //       badgeContent: Text(
+          //         totalQuantity.value.toString(),
+          //         style: TextStyle(color: Colors.white),
+          //       ),
+          //       child: IconButton(
+          //           icon: Icon(Icons.shopping_cart), onPressed: () {}),
+          //     );
+          //   },
+          //   valueListenable: totalQuantity,
+          // ),
+          // badges.Badge(
+          //   position: badges.BadgePosition.topEnd(top: 0, end: 3),
+          //   badgeAnimation: badges.BadgeAnimation.slide(
+          //       // disappearanceFadeAnimationDuration: Duration(milliseconds: 200),
+          //       // curve: Curves.easeInCubic,
+          //       ),
+          //   showBadge: true,
+          //   badgeStyle: badges.BadgeStyle(
+          //     badgeColor: Colors.blue,
+          //   ),
+          //   badgeContent: Text(
+          //     totalQuantity.toString(),
+          //     style: TextStyle(color: Colors.white),
+          //   ),
+          //   child:
+          //       IconButton(icon: Icon(Icons.shopping_cart), onPressed: () {}),
+          // ),
+
           BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is UnAuthenticated) {
@@ -112,7 +210,7 @@ class _HomeState extends State<Home> with AutomaticKeepAliveClientMixin {
                 //     .pushNamedAndRemoveUntil('/', (Route route) => false);
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => SignIn()),
+                  MaterialPageRoute(builder: (context) => const SignIn()),
                   (route) => false,
                 );
               }
@@ -128,6 +226,7 @@ class _HomeState extends State<Home> with AutomaticKeepAliveClientMixin {
                   );
                 }),
           ),
+
           // IconButton(
           //     icon: const Icon(Icons.app_registration_rounded),
           //     onPressed: () => Navigator.pushNamed(context, '/register')),
@@ -219,8 +318,8 @@ class _HomeState extends State<Home> with AutomaticKeepAliveClientMixin {
     );
   }
 
-  @override
-  bool get wantKeepAlive => true;
+  // @override
+  // bool get wantKeepAlive => true;
 }
 
 class _InternetConnectionWidget extends StatelessWidget {
@@ -238,19 +337,19 @@ class _InternetConnectionWidget extends StatelessWidget {
       listener: (context, state) {
         if (state.status == InternetStatus.DISCONNECTED) {
           print('disconnected');
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Disconnected'),
-            duration: const Duration(seconds: 3),
+            duration: Duration(seconds: 3),
           ));
         } else if (state.status == InternetStatus.CONNECTED) {
           print('connected');
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Connected'),
-            duration: const Duration(seconds: 3),
+            duration: Duration(seconds: 3),
           ));
         }
       },
-      child: SizedBox(),
+      child: const SizedBox(),
       // child: BlocBuilder<InternetBloc, InternetState>(
       //   // buildWhen: (context, state) {
       //   //   print(state.status);

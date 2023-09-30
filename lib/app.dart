@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:hive/Logger/my_logger.dart';
+import 'package:hive/bloc/add_to_cart/add_to_cart_bloc.dart';
+import 'package:hive/modules/phone_auth/views/phone_auth.dart';
 import 'package:hive/routes/app_router.dart';
 
 import 'package:responsive_framework/responsive_wrapper.dart';
@@ -56,6 +58,10 @@ class MyApp extends StatelessWidget {
             create: (searchContext) => ChatBloc(),
             lazy: false,
           ),
+          BlocProvider<AddToCartBloc>(
+            create: (searchContext) => AddToCartBloc(),
+            lazy: false,
+          ),
           // BlocProvider<InternetBloc>(
           //   create: (internetContext) =>
           //       InternetBloc(connectivity: connectivity)
@@ -65,6 +71,7 @@ class MyApp extends StatelessWidget {
         child: DevicePreview(
           enabled: false,
           builder: (context) => MaterialApp(
+            // home: PhoneAuth(),
             initialRoute: '/',
             onGenerateRoute: AppRouter().onGenerateRoute,
             // initialRoute: '/',
@@ -122,7 +129,7 @@ class MyApp extends StatelessWidget {
             //       return const SignIn();
             //     }),
             title: '${flavor.title}AFEX Exhibitor',
-            debugShowCheckedModeBanner: kDebugMode ? true : false,
+            debugShowCheckedModeBanner: false,
             useInheritedMediaQuery: true,
             builder: (context, child) {
               child = ResponsiveWrapper.builder(

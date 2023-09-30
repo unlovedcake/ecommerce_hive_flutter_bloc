@@ -13,8 +13,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(Loading());
       try {
         await AuthRepository.signIn(
-                email: event.email, password: event.password)
-            .whenComplete(() => emit(Authenticated()));
+            email: event.email, password: event.password);
+        //     .then((_) {
+        //   emit(Authenticated());
+        //   print('okey');
+        // }).catchError((e) {
+        //   print('okeys');
+        //   print(e.toString());
+        //   if (e.toString().contains('interrupted connection')) {
+        //     emit(AuthErrorSignIn('No Internet Access'));
+        //   } else {
+        //     emit(AuthErrorSignIn(e.toString()));
+        //   }
+        // });
       } catch (e) {
         emit(AuthErrorSignIn(e.toString()));
         emit(UnAuthenticated());
